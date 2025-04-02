@@ -1,4 +1,3 @@
-import React from 'react';
 import Game from './components/Game';
 import WalletButton from './components/WalletButton';
 import { WalletContextProvider } from './contexts/WalletContext';

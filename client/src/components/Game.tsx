@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 import { GameService } from '../services/GameService';
-import { GameState, GameCommitment } from '../types/game';
+import { GameState } from '../types/game';
 
 const GameContainer = styled.div`
   max-width: 800px;
@@ -97,12 +100,40 @@ const OpponentArea = styled.div`
 `;
 
 const Game: React.FC = () => {
-  const [gameService] = useState(() => new GameService());
+  const wallet = useWallet();
+  const { connection } = useConnection();
+  const [gameService, setGameService] = useState<GameService | null>(null);
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [selectedPrediction, setSelectedPrediction] = useState<number | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (wallet && connection) {
+      try {
+        // Using a valid Solana public key for testing
+        const programId = new PublicKey('11111111111111111111111111111111');
+        setGameService(new GameService({
+          programId,
+          connection,
+          wallet
+        }));
+      } catch (err) {
+        setError('Failed to initialize game service');
+        console.error('Error initializing game service:', err);
+      }
+    }
+  }, [wallet, connection]);
+
+  useEffect(() => {
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [unsubscribe]);
 
   const handleCardSelect = (card: number) => {
     setSelectedCard(card);
@@ -113,9 +144,12 @@ const Game: React.FC = () => {
   };
 
   const handleCreateGame = async () => {
+    if (!gameService) return;
     try {
       const id = await gameService.createGame();
       setGameId(id);
+      const unsubscribeFn = gameService.subscribeToGameState(id, setGameState);
+      setUnsubscribe(() => unsubscribeFn);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error creating game');
@@ -123,10 +157,11 @@ const Game: React.FC = () => {
   };
 
   const handleJoinGame = async () => {
-    if (!gameId) return;
-
+    if (!gameService || !gameId) return;
     try {
       await gameService.joinGame(gameId);
+      const unsubscribeFn = gameService.subscribeToGameState(gameId, setGameState);
+      setUnsubscribe(() => unsubscribeFn);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error joining game');
@@ -134,14 +169,11 @@ const Game: React.FC = () => {
   };
 
   const handleSubmitMove = async () => {
-    if (!gameId || selectedCard === null || selectedPrediction === null) return;
-
+    if (!gameService || !gameId || !selectedCard || !selectedPrediction) return;
     try {
-      const salt = Math.random().toString(36).substring(7);
-      const commitment: GameCommitment = {
+      const commitment = {
         card: selectedCard,
-        prediction: selectedPrediction,
-        salt,
+        prediction: selectedPrediction
       };
       await gameService.submitMove(gameId, commitment);
       setError(null);
@@ -151,33 +183,18 @@ const Game: React.FC = () => {
   };
 
   const handleRevealMove = async () => {
-    if (!gameId || selectedCard === null || selectedPrediction === null) return;
-
+    if (!gameId || !selectedCard || !selectedPrediction || !gameService) return;
     try {
-      const salt = Math.random().toString(36).substring(7);
-      await gameService.revealMove(gameId, selectedCard, selectedPrediction, salt);
+      await gameService.revealMove(gameId, selectedCard, selectedPrediction);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error revealing move');
     }
   };
 
-  useEffect(() => {
-    if (gameId) {
-      const fetchGameState = async () => {
-        try {
-          const state = await gameService.getGameState(gameId);
-          setGameState(state);
-        } catch (err) {
-          console.error('Error fetching game state:', err);
-        }
-      };
-
-      fetchGameState();
-      const interval = setInterval(fetchGameState, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [gameId]);
+  if (!gameService) {
+    return <div>Loading game service...</div>;
+  }
 
   return (
     <GameContainer>

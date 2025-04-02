@@ -1,8 +1,7 @@
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export interface GameState {
-  id: string;
   creator: string;
   opponent: string | null;
   betAmount: number;
@@ -10,8 +9,8 @@ export interface GameState {
   opponentCard: number | null;
   creatorPrediction: number | null;
   opponentPrediction: number | null;
-  creatorCommitment: string | null;
-  opponentCommitment: string | null;
+  creatorCommitment: { card: number; prediction: number } | null;
+  opponentCommitment: { card: number; prediction: number } | null;
   status: 'waiting' | 'in_progress' | 'completed';
   winner: string | null;
 }
@@ -24,6 +23,6 @@ export interface GameCommitment {
 
 export interface GameConfig {
   programId: PublicKey;
-  connection: any;
+  connection: Connection;
   wallet: WalletContextState;
 } 
