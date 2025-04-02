@@ -1,0 +1,192 @@
+{
+  "version": "0.1.0",
+  "name": "morra_game",
+  "instructions": [
+    {
+      "name": "createGame",
+      "accounts": [
+        {
+          "name": "game",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "betAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "joinGame",
+      "accounts": [
+        {
+          "name": "game",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "opponent",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "submitMove",
+      "accounts": [
+        {
+          "name": "game",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "player",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "commitmentHash",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "revealMove",
+      "accounts": [
+        {
+          "name": "game",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "player",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "card",
+          "type": "u8"
+        },
+        {
+          "name": "prediction",
+          "type": "u8"
+        },
+        {
+          "name": "salt",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Game",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "opponent",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "betAmount",
+            "type": "u64"
+          },
+          {
+            "name": "creatorCard",
+            "type": {
+              "option": "u8"
+            }
+          },
+          {
+            "name": "opponentCard",
+            "type": {
+              "option": "u8"
+            }
+          },
+          {
+            "name": "creatorPrediction",
+            "type": {
+              "option": "u8"
+            }
+          },
+          {
+            "name": "opponentPrediction",
+            "type": {
+              "option": "u8"
+            }
+          },
+          {
+            "name": "creatorCommitment",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "opponentCommitment",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": "GameStatus"
+            }
+          },
+          {
+            "name": "winner",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "GameStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Waiting"
+          },
+          {
+            "name": "InProgress"
+          },
+          {
+            "name": "Completed"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "address": "FYG1SQaM49FGPQEGco8s9x4i3MzquotS48XcNre1UMBf"
+  }
+} 
